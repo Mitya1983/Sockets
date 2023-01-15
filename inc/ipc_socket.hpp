@@ -39,7 +39,7 @@ namespace tristan::sockets {
             return IpcSocket::write(temp_data);
         }
 
-        auto read() -> uint8_t;
+        [[nodiscard]] auto read() -> uint8_t;
         [[nodiscard]] auto read(uint16_t size) -> std::vector< uint8_t >;
         [[nodiscard]] auto readUntil(uint8_t delimiter) -> std::vector< uint8_t >;
         [[nodiscard]] auto readUntil(const std::vector< uint8_t >& delimiter) -> std::vector< uint8_t >;
