@@ -496,7 +496,7 @@ auto tristan::sockets::InetSocket::write(uint8_t byte) -> uint8_t {
             bytes_sent = ::sendto(m_socket, &byte, 1, MSG_NOSIGNAL, reinterpret_cast< struct sockaddr* >(&remote_address), sizeof(remote_address));
         }
     }
-    if (static_cast< int64_t >(bytes_sent) < 0) {
+    if (static_cast< int8_t >(bytes_sent) < 0) {
         tristan::sockets::Error error{};
         switch (errno) {
             case EAGAIN: {

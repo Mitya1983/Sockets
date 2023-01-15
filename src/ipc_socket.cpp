@@ -562,7 +562,7 @@ auto tristan::sockets::IpcSocket::write(const std::vector< uint8_t >& data, uint
             bytes_sent = ::sendto(m_socket, data.data() + offset, l_size, MSG_NOSIGNAL, reinterpret_cast< struct sockaddr* >(&peer_address), address_length);
         }
     }
-    if (static_cast< int64_t >(bytes_sent) < 0) {
+    if (static_cast< int8_t >(bytes_sent) < 0) {
         tristan::sockets::Error error{};
         switch (errno) {
             case EAGAIN: {
