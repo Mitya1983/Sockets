@@ -291,8 +291,13 @@ void tristan::sockets::IpcSocket::connect() {
                     error = tristan::sockets::Error::SOCKET_TIMED_OUT;
                     break;
                 }
+                default:{
+                    m_error = std::error_code(errno, std::system_category());
+                }
             }
-            m_error = tristan::sockets::makeError(error);
+            if (not m_error) {
+                m_error = tristan::sockets::makeError(error);
+            }
             return;
         }
         m_connected = true;
