@@ -27,6 +27,8 @@ namespace tristan::sockets {
         void shutdown();
         [[nodiscard]] auto accept() -> std::optional< std::unique_ptr< IpcSocket > >;
 
+        [[nodiscard]] auto write(uint8_t byte) -> uint8_t;
+
         [[nodiscard]] auto write(const std::vector< uint8_t >& data, uint16_t size = 0, uint64_t offset = 0) -> uint64_t;
 
         template < class ObjectClassToSend >

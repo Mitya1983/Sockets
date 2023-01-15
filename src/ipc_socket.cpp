@@ -452,6 +452,87 @@ auto tristan::sockets::IpcSocket::accept() -> std::optional< std::unique_ptr< Ip
     return socket;
 }
 
+auto tristan::sockets::IpcSocket::write(uint8_t byte) -> uint8_t {
+    if (m_socket == -1) {
+        m_error = tristan::sockets::makeError(tristan::sockets::Error::SOCKET_NOT_INITIALISED);
+        return 0;
+    }
+    if (byte == 0) {
+        return 0;
+    }
+    uint8_t bytes_sent = 0;
+    if (m_connected) {
+        bytes_sent = ::write(m_socket, &byte, 1);
+    } else {
+        if (m_type == tristan::sockets::SocketType::STREAM) {
+            m_error = tristan::sockets::makeError(tristan::sockets::Error::SOCKET_NOT_CONNECTED);
+        } else {
+            sockaddr_un peer_address{};
+            peer_address.sun_family = AF_UNIX;
+            strcpy(peer_address.sun_path, m_peer_name.c_str());
+            auto address_length = sizeof(peer_address.sun_family) + m_peer_name.size();
+            bytes_sent = ::sendto(m_socket, &byte, 1, MSG_NOSIGNAL, reinterpret_cast< struct sockaddr* >(&peer_address), address_length);
+        }
+    }
+    if (static_cast< int8_t >(bytes_sent) < 0) {
+        tristan::sockets::Error error{};
+        switch (errno) {
+            case EAGAIN: {
+                error = tristan::sockets::Error::WRITE_TRY_AGAIN;
+                break;
+            }
+#if defined(EWOULDBLOCK) && EWOULDBLOCK != EAGAIN
+            case EWOULDBLOCK: {
+                error = tristan::sockets::Error::WRITE_TRY_AGAIN;
+                break;
+            }
+#endif
+            case EBADF: {
+                error = tristan::sockets::Error::WRITE_BAD_FILE_DESCRIPTOR;
+                break;
+            }
+            case EDESTADDRREQ: {
+                error = tristan::sockets::Error::WRITE_DESTINATION_ADDRESS;
+                break;
+            }
+            case EFAULT: {
+                error = tristan::sockets::Error::WRITE_BUFFER_OUT_OF_RANGE;
+                break;
+            }
+            case EFBIG: {
+                error = tristan::sockets::Error::WRITE_BIG;
+                break;
+            }
+            case EINTR: {
+                error = tristan::sockets::Error::WRITE_INTERRUPTED;
+                break;
+            }
+            case EINVAL: {
+                error = tristan::sockets::Error::WRITE_INVALID_ARGUMENT;
+                break;
+            }
+            case EIO: {
+                error = tristan::sockets::Error::WRITE_LOW_LEVEL_IO;
+                break;
+            }
+            case ENOSPC: {
+                error = tristan::sockets::Error::WRITE_NO_SPACE;
+                break;
+            }
+            case EPERM: {
+                error = tristan::sockets::Error::WRITE_NOT_PERMITTED;
+                break;
+            }
+            case EPIPE: {
+                error = tristan::sockets::Error::WRITE_PIPE;
+                break;
+            }
+        }
+        m_error = tristan::sockets::makeError(error);
+    }
+    return bytes_sent;
+}
+
 auto tristan::sockets::IpcSocket::write(const std::vector< uint8_t >& data, uint16_t size, uint64_t offset) -> uint64_t {
     if (m_socket == -1) {
         m_error = tristan::sockets::makeError(tristan::sockets::Error::SOCKET_NOT_INITIALISED);

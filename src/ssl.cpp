@@ -131,6 +131,43 @@ auto tristan::sockets::Ssl::verifyEndDate() -> bool {
     return true;
 }
 
+auto tristan::sockets::Ssl::write(uint8_t byte) -> std::pair< std::error_code, uint8_t > {
+    uint8_t bytes_writen = 0;
+    std::error_code error_code;
+    auto status = SSL_write_ex(m_ssl, &byte, 1, reinterpret_cast< uint64_t * >(&bytes_writen));
+    if (status <= 0) {
+        int32_t error = SSL_get_error(m_ssl, status);
+        switch (error) {
+            case SSL_ERROR_NONE: {
+                break;
+            }
+            case SSL_ERROR_ZERO_RETURN: {
+                error_code = tristan::sockets::makeError(tristan::sockets::Error::SSL_CLOSED_BY_PEER);
+                break;
+            }
+            case SSL_ERROR_WANT_READ: {
+                [[fallthrough]];
+            }
+            case SSL_ERROR_WANT_WRITE: {
+                error_code = tristan::sockets::makeError(tristan::sockets::Error::SSL_TRY_AGAIN);
+                break;
+            }
+            case SSL_ERROR_SYSCALL: {
+                error_code = tristan::sockets::makeError(tristan::sockets::Error::SSL_IO_ERROR);
+                break;
+            }
+            case SSL_ERROR_SSL: {
+                error_code = tristan::sockets::makeError(tristan::sockets::Error::SSL_FATAL_ERROR);
+                break;
+            }
+            default: {
+                error_code = tristan::sockets::makeError(tristan::sockets::Error::SSL_UNKNOWN_ERROR);
+            }
+        }
+    }
+    return {error_code, bytes_writen};
+}
+
 auto tristan::sockets::Ssl::write(const std::vector< uint8_t >& data, uint16_t size, uint64_t offset) -> std::pair< std::error_code, uint64_t > {
     uint64_t bytes_writen = 0;
     std::error_code error_code;
@@ -206,7 +243,6 @@ auto tristan::sockets::Ssl::read() -> std::pair< std::error_code, uint8_t > {
 
     return {error_code, byte};
 }
-
 auto tristan::sockets::Ssl::read(std::vector<uint8_t>& data, uint16_t size) -> std::pair< std::error_code, std::vector< uint8_t > > {
     if (size == 0) {
         return {{}, {}};
@@ -256,4 +292,5 @@ auto tristan::sockets::Ssl::read(std::vector<uint8_t>& data, uint16_t size) -> s
 
     return {error_code, data};
 }
+
 void tristan::sockets::Ssl::shutdown() { SSL_shutdown(m_ssl); }

@@ -38,7 +38,9 @@ namespace tristan::sockets {
         auto verifyStartDate() -> bool;
         auto verifyEndDate() -> bool;
 
-        auto write(const std::vector< uint8_t >& data, uint16_t size = 0, uint64_t offset = 0) -> std::pair< std::error_code, uint64_t >;
+        [[nodiscard]] auto write(uint8_t byte) -> std::pair< std::error_code, uint8_t >;
+
+        [[nodiscard]] auto write(const std::vector< uint8_t >& data, uint16_t size = 0, uint64_t offset = 0) -> std::pair< std::error_code, uint64_t >;
 
         template < class ObjectClassToSend >
         auto write(ObjectClassToSend object) -> std::pair< std::error_code, uint64_t >

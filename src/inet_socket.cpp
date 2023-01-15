@@ -313,26 +313,26 @@ void tristan::sockets::InetSocket::close() {
 
 void tristan::sockets::InetSocket::shutdown() {
     auto status = ::shutdown(m_socket, SHUT_RDWR);
-    if (status < 0){
+    if (status < 0) {
         tristan::sockets::Error error{};
-        switch (errno){
-            case EBADF:{
+        switch (errno) {
+            case EBADF: {
                 error = tristan::sockets::Error::SHUTDOWN_INVALID_SOCKET_ARGUMENT;
                 break;
             }
-            case EINVAL:{
+            case EINVAL: {
                 error = tristan::sockets::Error::SHUTDOWN_INVALID_SHUTDOWN_OPTION_PROVIDED;
                 break;
             }
-            case ENOTCONN:{
+            case ENOTCONN: {
                 error = tristan::sockets::Error::SHUTDOWN_NOT_CONNECTED;
                 break;
             }
-            case ENOTSOCK:{
+            case ENOTSOCK: {
                 error = tristan::sockets::Error::SHUTDOWN_INVALID_FILE_DESCRIPTOR;
                 break;
             }
-            case ENOBUFS:{
+            case ENOBUFS: {
                 error = tristan::sockets::Error::SHUTDOWN_NOT_ENOUPH_MEMORY;
                 break;
             }
@@ -362,7 +362,7 @@ auto tristan::sockets::InetSocket::accept() -> std::optional< std::unique_ptr< t
 
     sockaddr_in peer_address{};
     uint32_t peer_address_length = sizeof(peer_address);
-    std::unique_ptr<tristan::sockets::InetSocket> socket(new tristan::sockets::InetSocket(true));
+    std::unique_ptr< tristan::sockets::InetSocket > socket(new tristan::sockets::InetSocket(true));
     socket->m_type = m_type;
     socket->m_socket = ::accept(m_socket, reinterpret_cast< struct sockaddr* >(&peer_address), &peer_address_length);
 
@@ -460,6 +460,99 @@ auto tristan::sockets::InetSocket::accept() -> std::optional< std::unique_ptr< t
     socket->setHost(peer_address.sin_addr.s_addr);
     socket->m_connected = true;
     return socket;
+}
+
+auto tristan::sockets::InetSocket::write(uint8_t byte) -> uint8_t {
+    if (m_socket == -1) {
+        m_error = tristan::sockets::makeError(tristan::sockets::Error::SOCKET_NOT_INITIALISED);
+        return 0;
+    }
+    if (byte == 0) {
+        return 0;
+    }
+
+    uint8_t bytes_sent = 0;
+
+    if (m_connected) {
+        if (m_ssl) {
+            auto ssl_write_result = m_ssl->write(byte);
+            bytes_sent = ssl_write_result.second;
+            if (ssl_write_result.first && ssl_write_result.first.value() == static_cast< int >(tristan::sockets::Error::SSL_TRY_AGAIN)) {
+                m_error = tristan::sockets::makeError(tristan::sockets::Error::WRITE_TRY_AGAIN);
+            } else {
+                m_error = ssl_write_result.first;
+            }
+            return bytes_sent;
+        }
+        bytes_sent = ::write(m_socket, &byte, 1);
+    } else {
+        if (m_type == tristan::sockets::SocketType::STREAM) {
+            m_error = tristan::sockets::makeError(tristan::sockets::Error::SOCKET_NOT_CONNECTED);
+        } else {
+            sockaddr_in remote_address{};
+            remote_address.sin_family = AF_INET;
+            remote_address.sin_addr.s_addr = m_ip;
+            remote_address.sin_port = m_port;
+            bytes_sent = ::sendto(m_socket, &byte, 1, MSG_NOSIGNAL, reinterpret_cast< struct sockaddr* >(&remote_address), sizeof(remote_address));
+        }
+    }
+    if (static_cast< int64_t >(bytes_sent) < 0) {
+        tristan::sockets::Error error{};
+        switch (errno) {
+            case EAGAIN: {
+                error = tristan::sockets::Error::WRITE_TRY_AGAIN;
+                break;
+            }
+#if defined(EWOULDBLOCK) && EWOULDBLOCK != EAGAIN
+            case EWOULDBLOCK: {
+                error = tristan::sockets::Error::WRITE_TRY_AGAIN;
+                break;
+            }
+#endif
+            case EBADF: {
+                error = tristan::sockets::Error::WRITE_BAD_FILE_DESCRIPTOR;
+                break;
+            }
+            case EDESTADDRREQ: {
+                error = tristan::sockets::Error::WRITE_DESTINATION_ADDRESS;
+                break;
+            }
+            case EFAULT: {
+                error = tristan::sockets::Error::WRITE_BUFFER_OUT_OF_RANGE;
+                break;
+            }
+            case EFBIG: {
+                error = tristan::sockets::Error::WRITE_BIG;
+                break;
+            }
+            case EINTR: {
+                error = tristan::sockets::Error::WRITE_INTERRUPTED;
+                break;
+            }
+            case EINVAL: {
+                error = tristan::sockets::Error::WRITE_INVALID_ARGUMENT;
+                break;
+            }
+            case EIO: {
+                error = tristan::sockets::Error::WRITE_LOW_LEVEL_IO;
+                break;
+            }
+            case ENOSPC: {
+                error = tristan::sockets::Error::WRITE_NO_SPACE;
+                break;
+            }
+            case EPERM: {
+                error = tristan::sockets::Error::WRITE_NOT_PERMITTED;
+                break;
+            }
+            case EPIPE: {
+                error = tristan::sockets::Error::WRITE_PIPE;
+                break;
+            }
+        }
+        m_error = tristan::sockets::makeError(error);
+    }
+    return bytes_sent;
 }
 
 auto tristan::sockets::InetSocket::write(const std::vector< uint8_t >& data, uint16_t size, uint64_t offset) -> uint64_t {
