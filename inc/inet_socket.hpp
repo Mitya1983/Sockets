@@ -28,12 +28,12 @@ namespace tristan::sockets {
         void shutdown();
         [[nodiscard]] auto accept() -> std::optional<std::unique_ptr<InetSocket>>;
 
-        [[nodiscard]] auto write(uint8_t byte) -> uint8_t;
+        auto write(uint8_t byte) -> uint8_t;
 
-        [[nodiscard]] auto write(const std::vector< uint8_t >& data, uint16_t size = 0, uint64_t offset = 0) -> uint64_t;
+        auto write(const std::vector< uint8_t >& data, uint16_t size = 0, uint64_t offset = 0) -> uint64_t;
 
         template < class ObjectClassToSend >
-        [[nodiscard]] auto write(ObjectClassToSend object) -> uint64_t
+        auto write(ObjectClassToSend object) -> uint64_t
             requires std::is_standard_layout_v< ObjectClassToSend >
         {
             std::vector< uint8_t > temp_data(reinterpret_cast< uint8_t* >(object), reinterpret_cast< uint8_t* >(object) + sizeof(object));
