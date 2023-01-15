@@ -36,7 +36,7 @@ namespace tristan::sockets {
         auto write(ObjectClassToSend object) -> uint64_t
             requires std::is_standard_layout_v< ObjectClassToSend >
         {
-            std::vector< uint8_t > temp_data(reinterpret_cast< uint8_t* >(object), reinterpret_cast< uint8_t* >(object) + sizeof(object));
+            std::vector< uint8_t > temp_data(reinterpret_cast< uint8_t* >(&object), reinterpret_cast< uint8_t* >(&object) + sizeof(object));
             return InetSocket::write(temp_data);
         }
 
