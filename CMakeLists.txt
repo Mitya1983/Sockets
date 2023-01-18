@@ -43,10 +43,14 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 
 include_directories(
         inc/
+        inc/public
 )
 
-file(GLOB_RECURSE INC_FILES CONFIGURE_DEPENDS
+file(GLOB PRIVATE_INC_FILES CONFIGURE_DEPENDS
             ${PROJECT_SOURCE_DIR}/inc/*.hpp
+            )
+file(GLOB PUBLIC_INC_FILES CONFIGURE_DEPENDS
+            ${PROJECT_SOURCE_DIR}/inc/public/*.hpp
             )
 file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS
             ${PROJECT_SOURCE_DIR}/src/*.cpp
@@ -56,18 +60,17 @@ set(LIB_VERSION 0.1)
 
 if ("${CMAKE_INSTALL_PREFIX}" STREQUAL "")
     message(STATUS "CMAKE_INSTALL_PREFIX is not set. $ENV{HOME} directory will be used")
-    set(INSTALL_PREFIX "$ENV{HOME}")
+    set(INSTALL_PREFIX "$ENV{HOME}/tristan_libs")
 else ()
     set(INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 endif ("${CMAKE_INSTALL_PREFIX}" STREQUAL "")
 
-set(GENERAL_INSTALL_DIR ${INSTALL_PREFIX}/tristan_libs)
-set(PROJECT_INSTALL_DIR ${GENERAL_INSTALL_DIR}/${PROJECT_NAME})
+set(PROJECT_INSTALL_DIR ${INSTALL_PREFIX}/${PROJECT_NAME})
 set(LIBRARY_INSTALL_DIR ${PROJECT_INSTALL_DIR}/${CMAKE_BUILD_TYPE})
 message(STATUS "Library install directory is set to ${LIBRARY_INSTALL_DIR}")
 set(INCLUDE_INSTALL_DIR ${LIBRARY_INSTALL_DIR}/inc)
 message(STATUS "Include install directory is set to ${INCLUDE_INSTALL_DIR}")
-set(CMAKE_CONFIG_INSTALL_DIR ${GENERAL_INSTALL_DIR}/cmake/${CMAKE_BUILD_TYPE})
+set(CMAKE_CONFIG_INSTALL_DIR ${INSTALL_PREFIX}/cmake/${CMAKE_BUILD_TYPE})
 message(STATUS "CMake config files install directory is set to ${CMAKE_CONFIG_INSTALL_DIR}")
 
 if (BUILD_SHARED)
@@ -128,7 +131,7 @@ install(FILES
         DESTINATION ${CMAKE_CONFIG_INSTALL_DIR})
 
 install(FILES
-        ${INC_FILES}
+        ${PUBLIC_INC_FILES}
         CONFIGURATIONS ${CMAKE_BUILD_TYPE}
         DESTINATION ${INCLUDE_INSTALL_DIR})
 
