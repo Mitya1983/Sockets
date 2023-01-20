@@ -1,5 +1,6 @@
 #include "inet_socket.hpp"
 #include "socket_error.hpp"
+#include "ssl.hpp"
 
 #include <netdb.h>
 #include <sys/socket.h>

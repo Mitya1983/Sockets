@@ -2,9 +2,10 @@
 #define INET_SOCKET_HPP
 
 #include "socket_common.hpp"
-#include "ssl.hpp"
 
 namespace tristan::sockets {
+
+    class Ssl;
 
     class InetSocket {
     public:
