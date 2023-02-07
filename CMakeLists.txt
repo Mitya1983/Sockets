@@ -14,32 +14,32 @@ if (${BUILD_STATIC})
 endif (${BUILD_STATIC})
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-        # using Clang
-        if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-            set(CMAKE_CXX_FLAGS "-g -g3 -glldb -ggdb -ggdb3 -O0 -Wall -Wextra -Wpedantic -Wfloat-equal -Werror -fsanitize=address")
-        endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
-        if (CMAKE_BUILD_TYPE STREQUAL "Release")
-            set(CMAKE_CXX_FLAGS "-g0 -ggdb0 -glldb0 -O3")
-        endif (CMAKE_BUILD_TYPE STREQUAL "Release")
-    elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-        # using GCC
-        if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-            set(CMAKE_CXX_FLAGS "-g -ggdb3 -O0 -Wall -Wextra -Wpedantic -Wfloat-equal -Werror")
-        endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
-        if (CMAKE_BUILD_TYPE STREQUAL "Release")
-            set(CMAKE_CXX_FLAGS "-g0 -ggdb0 -O3")
-        endif (CMAKE_BUILD_TYPE STREQUAL "Release")
-    elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-        # using Visual Studio C++
-        if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-            set(CMAKE_CXX_FLAGS "/Zi /Od /JMC /WX")
-        endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
-        if (CMAKE_BUILD_TYPE STREQUAL "Release")
-            set(CMAKE_CXX_FLAGS "/Ot /O2")
-        endif (CMAKE_BUILD_TYPE STREQUAL "Release")
-    else ()
-        message(FATAL_ERROR "Compiler not supported")
-    endif ()
+    # using Clang
+    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+        set(CMAKE_CXX_FLAGS "-g -g3 -glldb -ggdb -ggdb3 -O0 -Wall -Wextra -Wpedantic -Wfloat-equal -Werror -fsanitize=address")
+    endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    if (CMAKE_BUILD_TYPE STREQUAL "Release")
+        set(CMAKE_CXX_FLAGS "-g0 -ggdb0 -glldb0 -O3")
+    endif (CMAKE_BUILD_TYPE STREQUAL "Release")
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    # using GCC
+    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+        set(CMAKE_CXX_FLAGS "-g -ggdb3 -O0 -Wall -Wextra -Wpedantic -Wfloat-equal -Werror")
+    endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    if (CMAKE_BUILD_TYPE STREQUAL "Release")
+        set(CMAKE_CXX_FLAGS "-g0 -ggdb0 -O3")
+    endif (CMAKE_BUILD_TYPE STREQUAL "Release")
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    # using Visual Studio C++
+    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+        set(CMAKE_CXX_FLAGS "/Zi /Od /JMC /WX")
+    endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    if (CMAKE_BUILD_TYPE STREQUAL "Release")
+        set(CMAKE_CXX_FLAGS "/Ot /O2")
+    endif (CMAKE_BUILD_TYPE STREQUAL "Release")
+else ()
+    message(FATAL_ERROR "Compiler not supported")
+endif ()
 
 include_directories(
         inc/
@@ -47,14 +47,14 @@ include_directories(
 )
 
 file(GLOB PRIVATE_INC_FILES CONFIGURE_DEPENDS
-            ${PROJECT_SOURCE_DIR}/inc/*.hpp
-            )
+        ${PROJECT_SOURCE_DIR}/inc/*.hpp
+        )
 file(GLOB PUBLIC_INC_FILES CONFIGURE_DEPENDS
-            ${PROJECT_SOURCE_DIR}/inc/public/*.hpp
-            )
+        ${PROJECT_SOURCE_DIR}/inc/public/*.hpp
+        )
 file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS
-            ${PROJECT_SOURCE_DIR}/src/*.cpp
-            )
+        ${PROJECT_SOURCE_DIR}/src/*.cpp
+        )
 
 set(LIB_VERSION 0.1)
 
@@ -85,18 +85,17 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_compile_definitions(${PROJECT_NAME} PUBLIC TRISTAN_DEBUG)
 endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
 
-target_sources(
-        ${PROJECT_NAME}
+target_sources(${PROJECT_NAME}
         PRIVATE ${SRC_FILES}
-        PUBLIC ${INC_FILES}
-)
+        PRIVATE ${PRIVATE_INC_FILES}
+        PUBLIC ${PUBLIC_INC_FILES}
+        )
 
-set_target_properties(
-        ${PROJECT_NAME}
+set_target_properties(${PROJECT_NAME}
         PROPERTIES
         VERSION ${LIB_VERSION}
         OUTPUT_NAME ${PROJECT_NAME}
-)
+        )
 
 if (GENERATE_DEB_PACKAGE)
     add_custom_command(
