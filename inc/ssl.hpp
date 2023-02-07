@@ -1,15 +1,14 @@
 #ifndef OPEN_SSL_HPP
 #define OPEN_SSL_HPP
 
-#include <openssl/crypto.h>
-#include <openssl/x509.h>
-#include <openssl/pem.h>
-#include <openssl/ssl.h>
-#include <openssl/err.h>
-
 #include <string>
 #include <vector>
 #include <memory>
+
+struct ssl_ctx_st;
+struct ssl_st;
+struct x509_st;
+struct ssl_method_st;
 
 namespace tristan::sockets {
 
@@ -55,11 +54,11 @@ namespace tristan::sockets {
 
         void shutdown();
 
-        SSL_CTX* m_context;
-        SSL* m_ssl;
-        X509* m_server_certificate;
+        ssl_ctx_st* m_context;
+        ssl_st* m_ssl;
+        x509_st* m_server_certificate;
 
-        const SSL_METHOD* method;
+        const ssl_method_st* method;
     };
 
 }  // namespace tristan::sockets

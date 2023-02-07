@@ -1,7 +1,9 @@
 #include "ssl.hpp"
 #include "socket_error.hpp"
 
-#include <openssl/x509_vfy.h>
+#include <openssl/crypto.h>
+#include <openssl/x509v3.h>
+#include <openssl/ssl.h>
 
 tristan::sockets::Ssl::Ssl(int32_t socket) :
     m_context(nullptr),
