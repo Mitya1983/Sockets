@@ -460,6 +460,8 @@ auto tristan::sockets::IpcSocket::accept() -> std::optional< std::unique_ptr< Ip
     socket->m_name = m_name;
     socket->m_peer_name = std::string(peer_address.sun_path);
     socket->m_connected = true;
+    socket->m_global_namespace = m_global_namespace;
+    socket->m_peer_global_namespace = m_peer_global_namespace;
     return socket;
 }
 
