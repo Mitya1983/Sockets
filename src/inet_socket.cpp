@@ -761,6 +761,10 @@ auto tristan::sockets::InetSocket::read() -> uint8_t {
                 error = tristan::sockets::Error::READ_NOT_SOCKET;
                 break;
             }
+            case ECONNRESET: {
+                error = tristan::sockets::Error::READ_CONNECTION_RESET;
+                break;
+            }
         }
         m_error = tristan::sockets::makeError(error);
     }
@@ -790,7 +794,7 @@ auto tristan::sockets::InetSocket::read(uint16_t size) -> std::vector< uint8_t >
     }
 
     data.resize(size);
-    auto status = ::read(m_socket, data.data(), size);
+    auto status = ::recv(m_socket, data.data(), size, 0);
     if (status < 0) {
         tristan::sockets::Error error{};
         switch (errno) {
@@ -834,6 +838,10 @@ auto tristan::sockets::InetSocket::read(uint16_t size) -> std::vector< uint8_t >
             }
             case ENOTSOCK: {
                 error = tristan::sockets::Error::READ_NOT_SOCKET;
+                break;
+            }
+            case ECONNRESET: {
+                error = tristan::sockets::Error::READ_CONNECTION_RESET;
                 break;
             }
         }

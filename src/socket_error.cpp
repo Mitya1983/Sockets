@@ -125,6 +125,7 @@ inline const std::map< tristan::sockets::Error, const char* > g_socket_code_desc
     {tristan::sockets::Error::READ_NOT_CONNECTED,                        "The socket is associated with a connection-oriented protocol and has not been connected"                  },
     {tristan::sockets::Error::READ_NOT_SOCKET,                           "The file descriptor does not refer to a socket"                                                           },
     {tristan::sockets::Error::READ_EOF,                                  "EOF received"                                                                                             },
+    {tristan::sockets::Error::READ_CONNECTION_RESET,                     "Connection reset by peer"                                                                                             },
     {tristan::sockets::Error::READ_DONE,                                 "Read until finished reading by reaching the delimiter"                                                    },
     {tristan::sockets::Error::SHUTDOWN_INVALID_SOCKET_ARGUMENT,          "The socket argument is not a valid file descriptor"                                                       },
     {tristan::sockets::Error::SHUTDOWN_INVALID_SHUTDOWN_OPTION_PROVIDED, "The how argument is invalid"                                                                              },
