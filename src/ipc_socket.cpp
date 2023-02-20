@@ -102,6 +102,9 @@ void tristan::sockets::IpcSocket::bind() {
     sockaddr_un address{};
     address.sun_family = AF_UNIX;
     strcpy(address.sun_path, m_name.c_str());
+    if (m_name.at(0) == '#'){
+        address.sun_path[0] = 0;
+    }
     auto address_length = sizeof(address.sun_family) + m_name.size();
     auto status = ::bind(m_socket, reinterpret_cast< const struct sockaddr* >(&address), address_length);
     if (status < 0) {
@@ -219,6 +222,9 @@ void tristan::sockets::IpcSocket::connect() {
         sockaddr_un peer_address{};
         peer_address.sun_family = AF_UNIX;
         strcpy(peer_address.sun_path, m_peer_name.c_str());
+        if (m_peer_name.at(0) == '#'){
+            peer_address.sun_path[0] = 0;
+        }
         auto address_length = sizeof(peer_address.sun_family) + m_peer_name.size();
         auto status = ::connect(m_socket, reinterpret_cast< struct sockaddr* >(&peer_address), address_length);
         if (status < 0) {
@@ -475,6 +481,9 @@ auto tristan::sockets::IpcSocket::write(uint8_t byte) -> uint8_t {
             sockaddr_un peer_address{};
             peer_address.sun_family = AF_UNIX;
             strcpy(peer_address.sun_path, m_peer_name.c_str());
+            if (m_peer_name.at(0) == '#'){
+                peer_address.sun_path[0] = 0;
+            }
             auto address_length = sizeof(peer_address.sun_family) + m_peer_name.size();
             bytes_sent = ::sendto(m_socket, &byte, 1, MSG_NOSIGNAL, reinterpret_cast< struct sockaddr* >(&peer_address), address_length);
         }
@@ -558,6 +567,9 @@ auto tristan::sockets::IpcSocket::write(const std::vector< uint8_t >& data, uint
             sockaddr_un peer_address{};
             peer_address.sun_family = AF_UNIX;
             strcpy(peer_address.sun_path, m_peer_name.c_str());
+            if (m_peer_name.at(0) == '#'){
+                peer_address.sun_path[0] = 0;
+            }
             auto address_length = sizeof(peer_address.sun_family) + m_peer_name.size();
             bytes_sent = ::sendto(m_socket, data.data() + offset, l_size, MSG_NOSIGNAL, reinterpret_cast< struct sockaddr* >(&peer_address), address_length);
         }
