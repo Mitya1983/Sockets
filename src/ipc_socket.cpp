@@ -730,6 +730,10 @@ auto tristan::sockets::IpcSocket::read() -> uint8_t {
                 error = tristan::sockets::Error::READ_NOT_SOCKET;
                 break;
             }
+            case ECONNRESET: {
+                error = tristan::sockets::Error::READ_CONNECTION_RESET;
+                break;
+            }
         }
         m_error = tristan::sockets::makeError(error);
     }
@@ -791,6 +795,10 @@ auto tristan::sockets::IpcSocket::read(uint16_t size) -> std::vector< uint8_t > 
             }
             case ENOTSOCK: {
                 error = tristan::sockets::Error::READ_NOT_SOCKET;
+                break;
+            }
+            case ECONNRESET: {
+                error = tristan::sockets::Error::READ_CONNECTION_RESET;
                 break;
             }
         }
