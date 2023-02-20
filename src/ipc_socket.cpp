@@ -458,10 +458,14 @@ auto tristan::sockets::IpcSocket::accept() -> std::optional< std::unique_ptr< Ip
         socket->setNonBlocking();
     }
     socket->m_name = m_name;
-    socket->m_peer_name = std::string(peer_address.sun_path);
+    if (peer_address.sun_path[0] == 0){
+        socket->m_peer_name = std::string(peer_address.sun_path + 1);
+        socket->m_peer_global_namespace = m_peer_global_namespace;
+    } else {
+        socket->m_peer_name = std::string(peer_address.sun_path);
+    }
     socket->m_connected = true;
     socket->m_global_namespace = m_global_namespace;
-    socket->m_peer_global_namespace = m_peer_global_namespace;
     return socket;
 }
 
