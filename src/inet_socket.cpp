@@ -485,7 +485,7 @@ auto tristan::sockets::InetSocket::write(uint8_t byte) -> uint8_t {
             }
             return bytes_sent;
         }
-        bytes_sent = ::write(m_socket, &byte, 1);
+        bytes_sent = ::send(m_socket, &byte, 1, MSG_NOSIGNAL);
     } else {
         if (m_type == tristan::sockets::SocketType::STREAM) {
             m_error = tristan::sockets::makeError(tristan::sockets::Error::SOCKET_NOT_CONNECTED);
@@ -500,6 +500,10 @@ auto tristan::sockets::InetSocket::write(uint8_t byte) -> uint8_t {
     if (static_cast< int8_t >(bytes_sent) < 0) {
         tristan::sockets::Error error{};
         switch (errno) {
+            case EACCES: {
+                error = tristan::sockets::Error::WRITE_ACCESS;
+                break;
+            }
             case EAGAIN: {
                 error = tristan::sockets::Error::WRITE_TRY_AGAIN;
                 break;
@@ -510,8 +514,16 @@ auto tristan::sockets::InetSocket::write(uint8_t byte) -> uint8_t {
                 break;
             }
 #endif
+            case EALREADY: {
+                error = tristan::sockets::Error::WRITE_ALREADY;
+                break;
+            }
             case EBADF: {
                 error = tristan::sockets::Error::WRITE_BAD_FILE_DESCRIPTOR;
+                break;
+            }
+            case ECONNRESET: {
+                error = tristan::sockets::Error::WRITE_CONNECTION_RESET;
                 break;
             }
             case EDESTADDRREQ: {
@@ -522,10 +534,6 @@ auto tristan::sockets::InetSocket::write(uint8_t byte) -> uint8_t {
                 error = tristan::sockets::Error::WRITE_BUFFER_OUT_OF_RANGE;
                 break;
             }
-            case EFBIG: {
-                error = tristan::sockets::Error::WRITE_BIG;
-                break;
-            }
             case EINTR: {
                 error = tristan::sockets::Error::WRITE_INTERRUPTED;
                 break;
@@ -534,16 +542,32 @@ auto tristan::sockets::InetSocket::write(uint8_t byte) -> uint8_t {
                 error = tristan::sockets::Error::WRITE_INVALID_ARGUMENT;
                 break;
             }
-            case EIO: {
-                error = tristan::sockets::Error::WRITE_LOW_LEVEL_IO;
+            case EISCONN: {
+                error = tristan::sockets::Error::WRITE_IS_CONNECTED;
                 break;
             }
-            case ENOSPC: {
-                error = tristan::sockets::Error::WRITE_NO_SPACE;
+            case EMSGSIZE: {
+                error = tristan::sockets::Error::WRITE_MESSAGE_SIZE;
                 break;
             }
-            case EPERM: {
-                error = tristan::sockets::Error::WRITE_NOT_PERMITTED;
+            case ENOBUFS: {
+                error = tristan::sockets::Error::WRITE_NO_BUFFER;
+                break;
+            }
+            case ENOMEM: {
+                error = tristan::sockets::Error::WRITE_NO_MEMORY;
+                break;
+            }
+            case ENOTCONN: {
+                error = tristan::sockets::Error::WRITE_NOT_CONNECTED;
+                break;
+            }
+            case ENOTSOCK: {
+                error = tristan::sockets::Error::WRITE_NOT_SOCKET;
+                break;
+            }
+            case EOPNOTSUPP: {
+                error = tristan::sockets::Error::WRITE_NOT_SUPPORTED;
                 break;
             }
             case EPIPE: {
@@ -580,7 +604,7 @@ auto tristan::sockets::InetSocket::write(const std::vector< uint8_t >& data, uin
             }
             return bytes_sent;
         }
-        bytes_sent = ::write(m_socket, data.data() + offset, l_size);
+        bytes_sent = ::send(m_socket, data.data() + offset, l_size, MSG_NOSIGNAL);
     } else {
         if (m_type == tristan::sockets::SocketType::STREAM) {
             m_error = tristan::sockets::makeError(tristan::sockets::Error::SOCKET_NOT_CONNECTED);
@@ -596,6 +620,10 @@ auto tristan::sockets::InetSocket::write(const std::vector< uint8_t >& data, uin
     if (static_cast< int64_t >(bytes_sent) < 0) {
         tristan::sockets::Error error{};
         switch (errno) {
+            case EACCES: {
+                error = tristan::sockets::Error::WRITE_ACCESS;
+                break;
+            }
             case EAGAIN: {
                 error = tristan::sockets::Error::WRITE_TRY_AGAIN;
                 break;
@@ -606,8 +634,16 @@ auto tristan::sockets::InetSocket::write(const std::vector< uint8_t >& data, uin
                 break;
             }
 #endif
+            case EALREADY: {
+                error = tristan::sockets::Error::WRITE_ALREADY;
+                break;
+            }
             case EBADF: {
                 error = tristan::sockets::Error::WRITE_BAD_FILE_DESCRIPTOR;
+                break;
+            }
+            case ECONNRESET: {
+                error = tristan::sockets::Error::WRITE_CONNECTION_RESET;
                 break;
             }
             case EDESTADDRREQ: {
@@ -618,10 +654,6 @@ auto tristan::sockets::InetSocket::write(const std::vector< uint8_t >& data, uin
                 error = tristan::sockets::Error::WRITE_BUFFER_OUT_OF_RANGE;
                 break;
             }
-            case EFBIG: {
-                error = tristan::sockets::Error::WRITE_BIG;
-                break;
-            }
             case EINTR: {
                 error = tristan::sockets::Error::WRITE_INTERRUPTED;
                 break;
@@ -630,16 +662,32 @@ auto tristan::sockets::InetSocket::write(const std::vector< uint8_t >& data, uin
                 error = tristan::sockets::Error::WRITE_INVALID_ARGUMENT;
                 break;
             }
-            case EIO: {
-                error = tristan::sockets::Error::WRITE_LOW_LEVEL_IO;
+            case EISCONN: {
+                error = tristan::sockets::Error::WRITE_IS_CONNECTED;
                 break;
             }
-            case ENOSPC: {
-                error = tristan::sockets::Error::WRITE_NO_SPACE;
+            case EMSGSIZE: {
+                error = tristan::sockets::Error::WRITE_MESSAGE_SIZE;
                 break;
             }
-            case EPERM: {
-                error = tristan::sockets::Error::WRITE_NOT_PERMITTED;
+            case ENOBUFS: {
+                error = tristan::sockets::Error::WRITE_NO_BUFFER;
+                break;
+            }
+            case ENOMEM: {
+                error = tristan::sockets::Error::WRITE_NO_MEMORY;
+                break;
+            }
+            case ENOTCONN: {
+                error = tristan::sockets::Error::WRITE_NOT_CONNECTED;
+                break;
+            }
+            case ENOTSOCK: {
+                error = tristan::sockets::Error::WRITE_NOT_SOCKET;
+                break;
+            }
+            case EOPNOTSUPP: {
+                error = tristan::sockets::Error::WRITE_NOT_SUPPORTED;
                 break;
             }
             case EPIPE: {
@@ -667,7 +715,7 @@ auto tristan::sockets::InetSocket::read() -> uint8_t {
         return byte;
     }
 
-    auto status = ::read(m_socket, &byte, 1);
+    auto status = ::recv(m_socket, &byte, 1, 0);
     if (status < 0) {
         tristan::sockets::Error error{};
         switch (errno) {
@@ -685,6 +733,10 @@ auto tristan::sockets::InetSocket::read() -> uint8_t {
                 error = tristan::sockets::Error::READ_BAD_FILE_DESCRIPTOR;
                 break;
             }
+            case ECONNREFUSED: {
+                error = tristan::sockets::Error::READ_CONNECTION_REFUSED;
+                break;
+            }
             case EFAULT: {
                 error = tristan::sockets::Error::READ_BUFFER_OUT_OF_RANGE;
                 break;
@@ -697,18 +749,22 @@ auto tristan::sockets::InetSocket::read() -> uint8_t {
                 error = tristan::sockets::Error::READ_INVALID_FILE_DESCRIPTOR;
                 break;
             }
-            case EIO: {
-                error = tristan::sockets::Error::READ_IO;
+            case ENOMEM: {
+                error = tristan::sockets::Error::READ_NO_MEMORY;
                 break;
             }
-            case EISDIR: {
-                error = tristan::sockets::Error::READ_IS_DIRECTORY;
+            case ENOTCONN: {
+                error = tristan::sockets::Error::READ_NOT_CONNECTED;
+                break;
+            }
+            case ENOTSOCK: {
+                error = tristan::sockets::Error::READ_NOT_SOCKET;
                 break;
             }
         }
         m_error = tristan::sockets::makeError(error);
     }
-    if (byte == 255) {
+    if (status == 0 || byte == 255) {
         m_error = tristan::sockets::makeError(tristan::sockets::Error::READ_EOF);
         byte = 0;
     }
@@ -742,8 +798,18 @@ auto tristan::sockets::InetSocket::read(uint16_t size) -> std::vector< uint8_t >
                 error = tristan::sockets::Error::READ_TRY_AGAIN;
                 break;
             }
+#if defined(EWOULDBLOCK) && EWOULDBLOCK != EAGAIN
+            case EWOULDBLOCK: {
+                error = tristan::sockets::Error::READ_TRY_AGAIN;
+                break;
+            }
+#endif
             case EBADF: {
                 error = tristan::sockets::Error::READ_BAD_FILE_DESCRIPTOR;
+                break;
+            }
+            case ECONNREFUSED: {
+                error = tristan::sockets::Error::READ_CONNECTION_REFUSED;
                 break;
             }
             case EFAULT: {
@@ -758,16 +824,22 @@ auto tristan::sockets::InetSocket::read(uint16_t size) -> std::vector< uint8_t >
                 error = tristan::sockets::Error::READ_INVALID_FILE_DESCRIPTOR;
                 break;
             }
-            case EIO: {
-                error = tristan::sockets::Error::READ_IO;
+            case ENOMEM: {
+                error = tristan::sockets::Error::READ_NO_MEMORY;
                 break;
             }
-            case EISDIR: {
-                error = tristan::sockets::Error::READ_IS_DIRECTORY;
+            case ENOTCONN: {
+                error = tristan::sockets::Error::READ_NOT_CONNECTED;
+                break;
+            }
+            case ENOTSOCK: {
+                error = tristan::sockets::Error::READ_NOT_SOCKET;
                 break;
             }
         }
         m_error = tristan::sockets::makeError(error);
+    } else if (status == 0){
+        m_error = tristan::sockets::makeError(tristan::sockets::Error::READ_EOF);
     }
 
     //    for (uint16_t i = 0; i < size; ++i) {
