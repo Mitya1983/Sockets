@@ -6,9 +6,9 @@
 #include <sys/un.h>
 #include <unistd.h>
 
-tristan::sockets::IpcSocket::IpcSocket(SocketType socket_type) :
+tristan::sockets::IpcSocket::IpcSocket(SocketType p_socket_type) :
     m_socket(-1),
-    m_type(socket_type),
+    m_type(p_socket_type),
     m_global_namespace(false),
     m_peer_global_namespace(false),
     m_non_blocking(false),
@@ -54,29 +54,29 @@ tristan::sockets::IpcSocket::IpcSocket(SocketType socket_type) :
 
 tristan::sockets::IpcSocket::~IpcSocket() { IpcSocket::close(); }
 
-void tristan::sockets::IpcSocket::setName(const std::string& name, bool global_namespace) {
-    m_global_namespace = global_namespace;
+void tristan::sockets::IpcSocket::setName(const std::string& p_name, bool p_global_namespace) {
+    m_global_namespace = p_global_namespace;
     if (m_global_namespace) {
         m_name = "#";
     }
-    m_name += name;
+    m_name += p_name;
 }
 
-void tristan::sockets::IpcSocket::setPeerName(const std::string& name, bool global_namespace) {
-    m_peer_global_namespace = global_namespace;
+void tristan::sockets::IpcSocket::setPeerName(const std::string& p_name, bool p_global_namespace) {
+    m_peer_global_namespace = p_global_namespace;
     if (m_peer_global_namespace) {
         m_peer_name = "#";
     }
-    m_peer_name += name;
+    m_peer_name += p_name;
 }
 
-void tristan::sockets::IpcSocket::setNonBlocking(bool non_blocking) {
+void tristan::sockets::IpcSocket::setNonBlocking(bool p_non_blocking) {
     if (m_socket == -1) {
         m_error = tristan::sockets::makeError(tristan::sockets::Error::SOCKET_NOT_INITIALISED);
         return;
     }
     int32_t status;
-    if (non_blocking) {
+    if (p_non_blocking) {
         status = fcntl(m_socket, F_SETFL, O_NONBLOCK);
     } else {
         status = fcntl(m_socket, F_SETFL, 0);
@@ -85,7 +85,7 @@ void tristan::sockets::IpcSocket::setNonBlocking(bool non_blocking) {
         m_error = tristan::sockets::makeError(tristan::sockets::Error::SOCKET_FCNTL_ERROR);
         return;
     }
-    m_non_blocking = non_blocking;
+    m_non_blocking = p_non_blocking;
 }
 
 void tristan::sockets::IpcSocket::resetError() { m_error = tristan::sockets::makeError(tristan::sockets::Error::SUCCESS); }
@@ -169,7 +169,7 @@ void tristan::sockets::IpcSocket::bind() {
     }
 }
 
-void tristan::sockets::IpcSocket::listen(uint32_t connection_count_limit) {
+void tristan::sockets::IpcSocket::listen(uint32_t p_connection_count_limit) {
     if (m_socket == -1) {
         m_error = tristan::sockets::makeError(tristan::sockets::Error::SOCKET_NOT_INITIALISED);
         return;
@@ -182,7 +182,7 @@ void tristan::sockets::IpcSocket::listen(uint32_t connection_count_limit) {
         m_error = tristan::sockets::makeError(tristan::sockets::Error::LISTEN_NOT_BOUND);
         return;
     }
-    auto status = ::listen(m_socket, static_cast< int32_t >(connection_count_limit));
+    auto status = ::listen(m_socket, static_cast< int32_t >(p_connection_count_limit));
     if (status < 0) {
         tristan::sockets::Error error{};
         switch (errno) {
@@ -336,7 +336,7 @@ void tristan::sockets::IpcSocket::shutdown() {
                 break;
             }
             case ENOBUFS: {
-                error = tristan::sockets::Error::SHUTDOWN_NOT_ENOUPH_MEMORY;
+                error = tristan::sockets::Error::SHUTDOWN_NOT_ENOUGH_MEMORY;
                 break;
             }
         }
@@ -429,7 +429,7 @@ auto tristan::sockets::IpcSocket::accept() -> std::optional< std::unique_ptr< Ip
                 [[fallthrough]];
             }
             case ENOMEM: {
-                error = tristan::sockets::Error::ACCEPT_NOT_ENOUPH_MEMORY;
+                error = tristan::sockets::Error::ACCEPT_NOT_ENOUGH_MEMORY;
                 break;
             }
             case ENOTSOCK: {
@@ -468,17 +468,17 @@ auto tristan::sockets::IpcSocket::accept() -> std::optional< std::unique_ptr< Ip
     return socket;
 }
 
-auto tristan::sockets::IpcSocket::write(uint8_t byte) -> uint8_t {
+auto tristan::sockets::IpcSocket::write(uint8_t p_byte) -> uint8_t {
     if (m_socket == -1) {
         m_error = tristan::sockets::makeError(tristan::sockets::Error::SOCKET_NOT_INITIALISED);
         return 0;
     }
-    if (byte == 0) {
+    if (p_byte == 0) {
         return 0;
     }
     uint8_t bytes_sent = 0;
     if (m_connected) {
-        bytes_sent = ::send(m_socket, &byte, 1, MSG_NOSIGNAL);
+        bytes_sent = ::send(m_socket, &p_byte, 1, MSG_NOSIGNAL);
     } else {
         if (m_type == tristan::sockets::SocketType::STREAM) {
             m_error = tristan::sockets::makeError(tristan::sockets::Error::SOCKET_NOT_CONNECTED);
@@ -490,7 +490,7 @@ auto tristan::sockets::IpcSocket::write(uint8_t byte) -> uint8_t {
                 peer_address.sun_path[0] = 0;
             }
             auto address_length = sizeof(peer_address.sun_family) + m_peer_name.size();
-            bytes_sent = ::sendto(m_socket, &byte, 1, MSG_NOSIGNAL, reinterpret_cast< struct sockaddr* >(&peer_address), address_length);
+            bytes_sent = ::sendto(m_socket, &p_byte, 1, MSG_NOSIGNAL, reinterpret_cast< struct sockaddr* >(&peer_address), address_length);
         }
     }
     if (static_cast< int8_t >(bytes_sent) < 0) {
@@ -576,19 +576,19 @@ auto tristan::sockets::IpcSocket::write(uint8_t byte) -> uint8_t {
     return bytes_sent;
 }
 
-auto tristan::sockets::IpcSocket::write(const std::vector< uint8_t >& data, uint16_t size, uint64_t offset) -> uint64_t {
+auto tristan::sockets::IpcSocket::write(const std::vector< uint8_t >& p_data, uint16_t p_size, uint64_t p_offset) -> uint64_t {
     if (m_socket == -1) {
         m_error = tristan::sockets::makeError(tristan::sockets::Error::SOCKET_NOT_INITIALISED);
         return 0;
     }
-    if (data.empty()) {
+    if (p_data.empty()) {
         return 0;
     }
 
     uint64_t bytes_sent = 0;
-    uint64_t l_size = (size == 0 ? data.size() : size);
+    uint64_t l_size = (p_size == 0 ? p_data.size() : p_size);
     if (m_connected) {
-        bytes_sent = ::send(m_socket, data.data() + offset, l_size, MSG_NOSIGNAL);
+        bytes_sent = ::send(m_socket, p_data.data() + p_offset, l_size, MSG_NOSIGNAL);
     } else {
         if (m_type == tristan::sockets::SocketType::STREAM) {
             m_error = tristan::sockets::makeError(tristan::sockets::Error::SOCKET_NOT_CONNECTED);
@@ -600,7 +600,7 @@ auto tristan::sockets::IpcSocket::write(const std::vector< uint8_t >& data, uint
                 peer_address.sun_path[0] = 0;
             }
             auto address_length = sizeof(peer_address.sun_family) + m_peer_name.size();
-            bytes_sent = ::sendto(m_socket, data.data() + offset, l_size, MSG_NOSIGNAL, reinterpret_cast< struct sockaddr* >(&peer_address), address_length);
+            bytes_sent = ::sendto(m_socket, p_data.data() + p_offset, l_size, MSG_NOSIGNAL, reinterpret_cast< struct sockaddr* >(&peer_address), address_length);
         }
     }
     if (static_cast< int8_t >(bytes_sent) < 0) {
@@ -749,14 +749,14 @@ auto tristan::sockets::IpcSocket::read() -> uint8_t {
     return byte;
 }
 
-auto tristan::sockets::IpcSocket::read(uint16_t size) -> std::vector< uint8_t > {
-    if (size == 0) {
+auto tristan::sockets::IpcSocket::read(uint16_t p_size) -> std::vector< uint8_t > {
+    if (p_size == 0) {
         return {};
     }
 
     std::vector< uint8_t > data;
-    data.resize(size);
-    auto status = ::recv(m_socket, data.data(), size, 0);
+    data.resize(p_size);
+    auto status = ::recv(m_socket, data.data(), p_size, 0);
     if (status < 0) {
         tristan::sockets::Error error{};
         switch (errno) {
@@ -826,7 +826,7 @@ auto tristan::sockets::IpcSocket::read(uint16_t size) -> std::vector< uint8_t > 
     return data;
 }
 
-auto tristan::sockets::IpcSocket::readUntil(uint8_t delimiter) -> std::vector< uint8_t > {
+auto tristan::sockets::IpcSocket::readUntil(uint8_t p_delimiter) -> std::vector< uint8_t > {
     std::vector< uint8_t > data;
 
     while (true) {
@@ -834,7 +834,7 @@ auto tristan::sockets::IpcSocket::readUntil(uint8_t delimiter) -> std::vector< u
         if (m_error || byte == 0) {
             break;
         }
-        if (byte == delimiter) {
+        if (byte == p_delimiter) {
             m_error = tristan::sockets::makeError(tristan::sockets::Error::READ_DONE);
             break;
         }
@@ -846,29 +846,29 @@ auto tristan::sockets::IpcSocket::readUntil(uint8_t delimiter) -> std::vector< u
     return data;
 }
 
-auto tristan::sockets::IpcSocket::readUntil(const std::vector< uint8_t >& delimiter) -> std::vector< uint8_t > {
+auto tristan::sockets::IpcSocket::readUntil(const std::vector< uint8_t >& p_delimiter) -> std::vector< uint8_t > {
     std::vector< uint8_t > data;
-    data.reserve(delimiter.size());
+    data.reserve(p_delimiter.size());
     while (true) {
         uint8_t byte = IpcSocket::read();
         if (m_error || byte == 0) {
             break;
         }
         data.push_back(byte);
-        if (data.size() >= delimiter.size()) {
-            std::vector< uint8_t > to_compare(data.end() - static_cast< int64_t >(delimiter.size()), data.end());
-            if (to_compare == delimiter) {
+        if (data.size() >= p_delimiter.size()) {
+            std::vector< uint8_t > to_compare(data.end() - static_cast< int64_t >(p_delimiter.size()), data.end());
+            if (to_compare == p_delimiter) {
                 m_error = tristan::sockets::makeError(tristan::sockets::Error::READ_DONE);
                 break;
             }
-        } else if (data.size() == delimiter.size() && data == delimiter) {
+        } else if (data.size() == p_delimiter.size() && data == p_delimiter) {
             m_error = tristan::sockets::makeError(tristan::sockets::Error::READ_DONE);
             break;
         }
     }
 
     if (m_error.value() == static_cast< int >(tristan::sockets::Error::READ_DONE)) {
-        data.erase(data.end() - static_cast< int64_t >(delimiter.size()), data.end());
+        data.erase(data.end() - static_cast< int64_t >(p_delimiter.size()), data.end());
     }
     if (not data.empty()) {
         data.shrink_to_fit();
