@@ -43,14 +43,14 @@ endif ()
 
 include_directories(
         inc/
-        inc/public
+        inc/private
 )
 
 file(GLOB PRIVATE_INC_FILES CONFIGURE_DEPENDS
-        ${PROJECT_SOURCE_DIR}/inc/*.hpp
+        ${PROJECT_SOURCE_DIR}/inc/private/*.hpp
         )
 file(GLOB PUBLIC_INC_FILES CONFIGURE_DEPENDS
-        ${PROJECT_SOURCE_DIR}/inc/public/*.hpp
+        ${PROJECT_SOURCE_DIR}/inc/*.hpp
         )
 file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS
         ${PROJECT_SOURCE_DIR}/src/*.cpp
