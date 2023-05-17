@@ -2,7 +2,6 @@
 #include "socket_error.hpp"
 
 #include <sys/socket.h>
-#include <sys/types.h>
 #include <sys/fcntl.h>
 #include <sys/un.h>
 #include <unistd.h>

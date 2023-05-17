@@ -4,7 +4,6 @@
 
 #include <netdb.h>
 #include <sys/socket.h>
-#include <sys/types.h>
 #include <sys/fcntl.h>
 #include <arpa/inet.h>
 
@@ -84,6 +83,25 @@ void tristan::sockets::InetSocket::setNonBlocking(bool non_blocking) {
         return;
     }
     m_non_blocking = non_blocking;
+}
+
+void tristan::sockets::InetSocket::setTimeOut(std::chrono::seconds p_seconds) {
+    if (m_socket == -1) {
+        m_error = tristan::sockets::makeError(tristan::sockets::Error::SOCKET_NOT_INITIALISED);
+        return;
+    }
+    struct timeval l_timeval{};
+    l_timeval.tv_sec = p_seconds.count();
+    auto status = setsockopt(m_socket, SOL_SOCKET, SO_RCVTIMEO, &l_timeval, sizeof (struct timeval));
+    if (status == -1){
+        m_error = tristan::sockets::makeError(tristan::sockets::Error::SOCKET_SET_TIMEOUT_ERROR);
+        return;
+    }
+    status = setsockopt(m_socket, SOL_SOCKET, SO_SNDTIMEO, &l_timeval, sizeof (struct timeval));
+    if (status == -1){
+        m_error = tristan::sockets::makeError(tristan::sockets::Error::SOCKET_SET_TIMEOUT_ERROR);
+        return;
+    }
 }
 
 void tristan::sockets::InetSocket::resetError() { m_error = tristan::sockets::makeError(tristan::sockets::Error::SUCCESS); }
@@ -209,7 +227,11 @@ void tristan::sockets::InetSocket::connect(bool ssl) {
                     break;
                 }
                 case EAGAIN: {
-                    error = tristan::sockets::Error::CONNECT_TRY_AGAIN;
+                    if (m_non_blocking) {
+                        error = tristan::sockets::Error::CONNECT_TRY_AGAIN;
+                    } else {
+                        error = tristan::sockets::Error::SOCKET_TIMED_OUT;
+                    }
                     break;
                 }
                 case EALREADY: {
@@ -229,7 +251,11 @@ void tristan::sockets::InetSocket::connect(bool ssl) {
                     break;
                 }
                 case EINPROGRESS: {
-                    error = tristan::sockets::Error::CONNECT_IN_PROGRESS;
+                    if (m_non_blocking) {
+                        error = tristan::sockets::Error::CONNECT_IN_PROGRESS;
+                    } else {
+                        error = tristan::sockets::Error::SOCKET_TIMED_OUT;
+                    }
                     break;
                 }
                 case EINTR: {
@@ -370,7 +396,7 @@ auto tristan::sockets::InetSocket::accept() -> std::optional< std::unique_ptr< t
     if (socket->m_socket < 0) {
         tristan::sockets::Error error{};
         switch (errno) {
-            case EAGAIN: {
+            case EAGAIN: {//NOLINT
                 [[fallthrough]];
             }
             case ENETDOWN: {
@@ -505,12 +531,20 @@ auto tristan::sockets::InetSocket::write(uint8_t byte) -> uint8_t {
                 break;
             }
             case EAGAIN: {
-                error = tristan::sockets::Error::WRITE_TRY_AGAIN;
+                if (m_non_blocking) {
+                    error = tristan::sockets::Error::WRITE_TRY_AGAIN;
+                } else {
+                    error = tristan::sockets::Error::SOCKET_TIMED_OUT;
+                }
                 break;
             }
 #if defined(EWOULDBLOCK) && EWOULDBLOCK != EAGAIN
             case EWOULDBLOCK: {
-                error = tristan::sockets::Error::WRITE_TRY_AGAIN;
+                if (m_non_blocking) {
+                    error = tristan::sockets::Error::WRITE_TRY_AGAIN;
+                } else {
+                    error = tristan::sockets::Error::SOCKET_TIMED_OUT;
+                }
                 break;
             }
 #endif
@@ -625,12 +659,20 @@ auto tristan::sockets::InetSocket::write(const std::vector< uint8_t >& data, uin
                 break;
             }
             case EAGAIN: {
-                error = tristan::sockets::Error::WRITE_TRY_AGAIN;
+                if (m_non_blocking) {
+                    error = tristan::sockets::Error::WRITE_TRY_AGAIN;
+                } else {
+                    error = tristan::sockets::Error::SOCKET_TIMED_OUT;
+                }
                 break;
             }
 #if defined(EWOULDBLOCK) && EWOULDBLOCK != EAGAIN
             case EWOULDBLOCK: {
-                error = tristan::sockets::Error::WRITE_TRY_AGAIN;
+                if (m_non_blocking) {
+                    error = tristan::sockets::Error::WRITE_TRY_AGAIN;
+                } else {
+                    error = tristan::sockets::Error::SOCKET_TIMED_OUT;
+                }
                 break;
             }
 #endif
@@ -720,12 +762,20 @@ auto tristan::sockets::InetSocket::read() -> uint8_t {
         tristan::sockets::Error error{};
         switch (errno) {
             case EAGAIN: {
-                error = tristan::sockets::Error::READ_TRY_AGAIN;
+                if (m_non_blocking) {
+                    error = tristan::sockets::Error::READ_TRY_AGAIN;
+                } else {
+                    error = tristan::sockets::Error::SOCKET_TIMED_OUT;
+                }
                 break;
             }
 #if defined(EWOULDBLOCK) && EWOULDBLOCK != EAGAIN
             case EWOULDBLOCK: {
-                error = tristan::sockets::Error::READ_TRY_AGAIN;
+                if (m_non_blocking) {
+                    error = tristan::sockets::Error::READ_TRY_AGAIN;
+                } else {
+                    error = tristan::sockets::Error::SOCKET_TIMED_OUT;
+                }
                 break;
             }
 #endif
@@ -799,12 +849,20 @@ auto tristan::sockets::InetSocket::read(uint16_t size) -> std::vector< uint8_t >
         tristan::sockets::Error error{};
         switch (errno) {
             case EAGAIN: {
-                error = tristan::sockets::Error::READ_TRY_AGAIN;
+                if (m_non_blocking) {
+                    error = tristan::sockets::Error::READ_TRY_AGAIN;
+                } else {
+                    error = tristan::sockets::Error::SOCKET_TIMED_OUT;
+                }
                 break;
             }
 #if defined(EWOULDBLOCK) && EWOULDBLOCK != EAGAIN
             case EWOULDBLOCK: {
-                error = tristan::sockets::Error::READ_TRY_AGAIN;
+                if (m_non_blocking) {
+                    error = tristan::sockets::Error::READ_TRY_AGAIN;
+                } else {
+                    error = tristan::sockets::Error::SOCKET_TIMED_OUT;
+                }
                 break;
             }
 #endif
@@ -849,14 +907,6 @@ auto tristan::sockets::InetSocket::read(uint16_t size) -> std::vector< uint8_t >
     } else if (status == 0){
         m_error = tristan::sockets::makeError(tristan::sockets::Error::READ_EOF);
     }
-
-    //    for (uint16_t i = 0; i < size; ++i) {
-    //        uint8_t byte = InetSocket::read();
-    //        if (m_error) {
-    //            break;
-    //        }
-    //        data.push_back(byte);
-    //    }
     data.shrink_to_fit();
     if (data.at(0) == 0) {
         return {};
