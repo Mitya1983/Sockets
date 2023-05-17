@@ -3,6 +3,8 @@
 
 #include "socket_common.hpp"
 
+#include <chrono>
+
 namespace tristan::sockets {
 
     class Ssl;
@@ -21,6 +23,7 @@ namespace tristan::sockets {
         void setHost(uint32_t ip, const std::string& host_name = "");
         void setPort(uint16_t port);
         void setNonBlocking(bool non_blocking = true);
+        void setTimeOut(std::chrono::seconds p_milliseconds);
         void resetError();
         void bind();
         void listen(uint32_t connection_count_limit);
